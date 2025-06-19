@@ -1,21 +1,61 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+// Theme Provider using InheritedWidget
+class ThemeProvider extends InheritedWidget {
+  final bool isDarkMode;
+  final VoidCallback toggleTheme;
+
+  const ThemeProvider({
+    super.key,
+    required this.isDarkMode,
+    required this.toggleTheme,
+    required super.child,
+  });
+
+  static ThemeProvider? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ThemeProvider>();
+  }
+
+  @override
+  bool updateShouldNotify(ThemeProvider oldWidget) {
+    return isDarkMode != oldWidget.isDarkMode;
+  }
+}
+
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = false;
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoApp(
-      title: 'Flutter Cupertino Demo',
-      theme: const CupertinoThemeData(
-        primaryColor: CupertinoColors.systemBlue,
+    return ThemeProvider(
+      isDarkMode: _isDarkMode,
+      toggleTheme: _toggleTheme,
+      child: CupertinoApp(
+        title: 'Flutter Cupertino Demo',
+        theme: CupertinoThemeData(
+          brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+          primaryColor: CupertinoColors.systemBlue,
+        ),
+        home: const LoginView(),
       ),
-      home: const LoginView(),
     );
   }
 }
@@ -194,6 +234,10 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = ThemeProvider.of(context);
+    final isDarkMode = themeProvider?.isDarkMode ?? false;
+    final onThemeToggle = themeProvider?.toggleTheme ?? () {};
+
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
         middle: Text('Perfil'),
@@ -230,6 +274,17 @@ class ProfileView extends StatelessWidget {
                   title: const Text('Editar Perfil'),
                   trailing: const Icon(CupertinoIcons.forward),
                   onTap: () {},
+                ),
+                CupertinoListTile(
+                  leading: Icon(
+                    isDarkMode ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
+                    color: isDarkMode ? CupertinoColors.systemYellow : CupertinoColors.systemOrange,
+                  ),
+                  title: const Text('Modo Oscuro'),
+                  trailing: CupertinoSwitch(
+                    value: isDarkMode,
+                    onChanged: (value) => onThemeToggle(),
+                  ),
                 ),
                 CupertinoListTile(
                   leading: const Icon(CupertinoIcons.settings),
